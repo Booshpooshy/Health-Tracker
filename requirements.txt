@@ -1,0 +1,4 @@
+Flask==2.3.3
+Werkzeug==2.3.7
+reportlab==4.0.4
+gunicorn==21.2.0 

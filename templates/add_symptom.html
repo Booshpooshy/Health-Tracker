@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>➕ Log New Symptom</h1>
+<p>Record a new symptom entry to track your health patterns.</p>
+
+<form method="POST" action="/save-symptom">
+    <div class="form-group">
+        <label for="symptom_id">🩺 What symptom are you experiencing?</label>
+        <select name="symptom_id" id="symptom_id" required>
+            <option value="">-- Select a symptom --</option>
+            {% for symptom in symptoms %}
+                <option value="{{ symptom.id }}">
+                    {{ symptom.name }}
+                    {% if symptom.description %}
+                        - {{ symptom.description }}
+                    {% endif %}
+                </option>
+            {% endfor %}
+        </select>
+        <small style="color: #666; font-size: 12px;">Choose the symptom that best matches what you're feeling</small>
+    </div>
+    
+    <div class="form-group">
+        <label for="severity">📊 How severe is it? (1 = Very Mild, 10 = Extremely Severe)</label>
+        <select name="severity" id="severity" required>
+            <option value="">-- Select severity --</option>
+            {% for i in range(1, 11) %}
+                <option value="{{ i }}">
+                    {{ i }} - 
+                    {% if i <= 2 %}
+                        Very Mild 😊
+                    {% elif i <= 4 %}
+                        Mild 🙂
+                    {% elif i <= 6 %}
+                        Moderate 😐
+                    {% elif i <= 8 %}
+                        Severe 😟
+                    {% else %}
+                        Very Severe 😰
+                    {% endif %}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label for="notes">📋 Additional Notes (Optional)</label>
+        <textarea name="notes" id="notes" rows="4" placeholder="Describe any additional details about this symptom...&#10;&#10;For example:&#10;- What might have triggered it?&#10;- How long have you had it?&#10;- What makes it better or worse?"></textarea>
+        <small style="color: #666; font-size: 12px;">These details can help you and your doctor identify patterns</small>
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <button type="submit">💾 Save Symptom Entry</button>
+        <a href="/" style="margin-left: 15px; color: #6c757d; text-decoration: none;">❌ Cancel</a>
+    </div>
+</form>
+
+<div style="margin-top: 30px; padding: 15px; background-color: #e7f3ff; border-radius: 5px; border-left: 4px solid #007bff;">
+    <h4>💡 Tips for Better Tracking:</h4>
+    <ul>
+        <li>Try to log symptoms as soon as you notice them</li>
+        <li>Be honest about severity - this helps identify patterns</li>
+        <li>Include details about potential triggers in your notes</li>
+        <li>Track symptoms even on good days (you can log severity as 1)</li>
+    </ul>
+</div>
+{% endblock %}

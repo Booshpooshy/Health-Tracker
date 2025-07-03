@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>📊 Symptom History</h1>
+<p>View all your symptom entries to identify patterns and trends.</p>
+
+{% if logs %}
+    <div style="margin-bottom: 20px;">
+        <p><strong>Total Entries:</strong> {{ logs|length }}</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>📅 Date</th>
+                <th>🩺 Symptom</th>
+                <th>📊 Severity</th>
+                <th>📋 Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.log_date }}</td>
+                <td>
+                    <strong>{{ log.symptom_name }}</strong>
+                </td>
+                <td>
+                    <span style="font-size: 18px; font-weight: bold;">{{ log.severity }}/10</span>
+                    <br>
+                    {% if log.severity <= 3 %}
+                        <span style="color: green; font-size: 12px;">😊 MILD</span>
+                    {% elif log.severity <= 6 %}
+                        <span style="color: orange; font-size: 12px;">😐 MODERATE</span>
+                    {% else %}
+                        <span style="color: red; font-size: 12px;">😰 SEVERE</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if log.notes %}
+                        {{ log.notes }}
+                    {% else %}
+                        <em style="color: #999;">No notes</em>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <div style="text-align: center; padding: 40px; background-color: #f8f9fa; border-radius: 5px;">
+        <h3>No symptom history yet</h3>
+        <p>Start logging symptoms to see your history here!</p>
+        <a href="/add-symptom" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
+            ➕ Add Your First Symptom
+        </a>
+    </div>
+{% endif %}
+
+<div style="margin-top: 30px;">
+    <a href="/add-symptom" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
+        ➕ Log New Symptom
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+/* Responsive container */
+.dashboard-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin: 2rem 0;
+}
+.section {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    flex: 1 1 300px;
+    min-width: 300px;
+}
+@media (max-width: 900px) {
+    .dashboard-container { flex-direction: column; }
+}
+input, select, textarea {
+    width: 100%;
+    padding: 0.5rem;
+    margin: 0.5rem 0 1rem 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+button {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button:hover { background: #0056b3; }
+.table-responsive {
+    overflow-x: auto;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+th, td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+th { background: #f8f9fa; }
+</style>
+
+<!-- Export Buttons -->
+<div style="margin-bottom: 20px;">
+    <a href="{{ url_for('export_csv') }}" class="btn" style="background:#28a745;color:white;padding:8px 16px;border-radius:4px;text-decoration:none;margin-right:10px;">Export as CSV</a>
+    <a href="{{ url_for('export_pdf') }}" class="btn" style="background:#007bff;color:white;padding:8px 16px;border-radius:4px;text-decoration:none;">Export as PDF</a>
+</div>
+
+<div class="dashboard-container">
+    <!-- Insights Section -->
+    <div class="section" style="width:100%;">
+        <h2>Insights</h2>
+        <ul>
+            {% for insight in insights %}
+            <li>{{ insight }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Symptom Input Form -->
+    <div class="section" style="max-width: 400px;">
+        <h2>Log Symptom</h2>
+        <form method="POST" action="/add-symptom">
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" required>
+            
+            <label for="symptom">Symptom</label>
+            <input type="text" id="symptom" name="symptom" required>
+            
+            <label for="severity">Severity (1-10)</label>
+            <input type="number" id="severity" name="severity" min="1" max="10" required>
+            
+            <label for="notes">Notes</label>
+            <textarea id="notes" name="notes" rows="2"></textarea>
+            
+            <button type="submit">Add Entry</button>
+        </form>
+    </div>
+
+    <!-- Recent Entries Table -->
+    <div class="section table-responsive">
+        <h2>Recent Entries</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Symptom</th>
+                    <th>Severity</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs[:5] %}
+                <tr>
+                    <td>{{ log.log_date }}</td>
+                    <td>{{ log.symptom_name }}</td>
+                    <td>{{ log.severity }}</td>
+                    <td>{{ log.notes or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="/history" style="display:block; margin-top:1rem;">View Full History</a>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="section" style="flex:2; min-width: 400px;">
+        <h2>Symptom Frequency Over Time</h2>
+        <canvas id="freqChart" height="150"></canvas>
+        <h2>Symptom Severity Trends</h2>
+        <canvas id="severityChart" height="150"></canvas>
+        <h2>Symptom Correlation (Co-occurrence)</h2>
+        <div style="overflow-x:auto;">
+            <table id="correlationTable" style="min-width:400px;">
+                <thead>
+                    <tr>
+                        <th>Symptom</th>
+                        {% for s2 in all_symptoms %}
+                        <th>{{ s2 }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s1 in all_symptoms %}
+                    <tr>
+                        <td><strong>{{ s1 }}</strong></td>
+                        {% for s2 in all_symptoms %}
+                        {% set alpha = (co_occurrence[s1][s2] / 10) if co_occurrence[s1][s2] > 0 else 0.05 %}
+                        <td style="background-color: rgba(0,123,255,{{ '%.2f' % alpha }}); color: #222;">
+                            {{ co_occurrence[s1][s2] }}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const allDates = {{ all_dates|tojson }};
+const allSymptoms = {{ all_symptoms|tojson }};
+const freqData = {{ freq_data|tojson }};
+const severityData = {{ severity_data|tojson }};
+
+// Frequency Chart
+const freqDatasets = allSymptoms.map((symptom, idx) => ({
+    label: symptom,
+    data: freqData[symptom],
+    fill: false,
+    borderColor: `hsl(${(idx*360/allSymptoms.length)}, 70%, 50%)`,
+    backgroundColor: `hsl(${(idx*360/allSymptoms.length)}, 70%, 80%)`,
+    tension: 0.2
+}));
+
+new Chart(document.getElementById('freqChart').getContext('2d'), {
+    type: 'line',
+    data: {
+        labels: allDates,
+        datasets: freqDatasets
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: true } },
+        scales: { y: { beginAtZero: true, title: { display: true, text: 'Frequency' } } }
+    }
+});
+
+// Severity Chart
+const severityDatasets = allSymptoms.map((symptom, idx) => ({
+    label: symptom,
+    data: severityData[symptom],
+    fill: false,
+    borderColor: `hsl(${(idx*360/allSymptoms.length)}, 70%, 40%)`,
+    backgroundColor: `hsl(${(idx*360/allSymptoms.length)}, 70%, 90%)`,
+    tension: 0.2
+}));
+
+new Chart(document.getElementById('severityChart').getContext('2d'), {
+    type: 'line',
+    data: {
+        labels: allDates,
+        datasets: severityDatasets
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: true } },
+        scales: { y: { min: 0, max: 10, title: { display: true, text: 'Severity' } } }
+    }
+});
+</script>
+
+<!-- Debug Info -->
+<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border: 1px solid #ccc;">
+    <h3>Debug Info:</h3>
+    <p>All Dates: {{ all_dates|length }}</p>
+    <p>All Symptoms: {{ all_symptoms|length }}</p>
+    <p>Insights: {{ insights|length }}</p>
+    <p>Freq Data Keys: {{ freq_data.keys()|list }}</p>
+</div>
+{% endblock %}

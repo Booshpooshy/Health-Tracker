@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>🏥 Health Symptom Tracker</h1>
+<p>Welcome to your personal health tracking dashboard!</p>
+
+<h2>📝 Recent Symptoms</h2>
+
+{% if recent_logs %}
+    <p>Here are your most recent symptom entries:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>📅 Date</th>
+                <th>🩺 Symptom</th>
+                <th>📊 Severity</th>
+                <th>📋 Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in recent_logs %}
+            <tr>
+                <td>{{ log.log_date }}</td>
+                <td>{{ log.symptom_name }}</td>
+                <td>
+                    <strong>{{ log.severity }}/10</strong>
+                    {% if log.severity <= 3 %}
+                        <span style="color: green;">😊 Mild</span>
+                    {% elif log.severity <= 6 %}
+                        <span style="color: orange;">😐 Moderate</span>
+                    {% else %}
+                        <span style="color: red;">😰 Severe</span>
+                    {% endif %}
+                </td>
+                <td>{{ log.notes if log.notes else 'No notes added' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <div style="text-align: center; padding: 40px; background-color: #f8f9fa; border-radius: 5px;">
+        <h3>No symptoms logged yet</h3>
+        <p>Start tracking your health by adding your first symptom entry!</p>
+        <a href="/add-symptom" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
+            ➕ Add Your First Symptom
+        </a>
+    </div>
+{% endif %}
+
+<div style="margin-top: 30px;">
+    <a href="/add-symptom" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
+        ➕ Log New Symptom
+    </a>
+    <a href="/history" style="background-color: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; margin-left: 10px;">
+        📊 View Full History
+    </a>
+</div>
+{% endblock %}
